@@ -3,7 +3,9 @@ package simpledb.test;
 
 import simpledb.buffer.Buffer;
 import simpledb.buffer.BufferMgr;
-import simpledb.buffer.BasicBufferMgr;
+
+import java.util.ArrayList;
+
 import simpledb.file.Block;
 import simpledb.server.SimpleDB;
 
@@ -11,57 +13,41 @@ public class LRUKTEST {
 
 	public static void main(String[] args) {
 		
+		SimpleDB.BUFFER_SIZE=8;
+		SimpleDB.LRU_K_VALUE=2;
+		SimpleDB.LOG_FILE="lruktest-1.log";
 		SimpleDB.initFileLogAndBufferMgr("lruktest");
-		int numOfBuffers = 4;
-		BufferMgr bufferManager = new BufferMgr(numOfBuffers,2);
-		Block a1 = new Block("A  1", 1);
-		Block a2 = new Block("A2", 2);
-		Block a3 = new Block("A3", 3);
-		Block a4 = new Block("A4", 4);
-		Block a5 = new Block("A5", 5);
-		Block a6 = new Block("A6", 6);
-		Buffer ba = bufferManager.pin(a1,(long)2);
-		bufferManager.unpin(ba);
+		BufferMgr BM = SimpleDB.bufferMgr();
 		
-		Buffer bb = bufferManager.pin(a2,(long)5);
-		bufferManager.unpin(bb);
+		ArrayList<Block> blocks=new ArrayList<Block>();
+		ArrayList<Buffer> buffers=new ArrayList<Buffer>();
 		
-		ba = bufferManager.pin(a1,(long)8);
-		bufferManager.unpin(ba);
-		
-		bb = bufferManager.pin(a2,(long)16);
-		bufferManager.unpin(bb);
-		
-		Buffer bc = bufferManager.pin(a3,(long)20);
-		bufferManager.unpin(bc);
-		
-		Buffer bd = bufferManager.pin(a4,(long)24);
-		bufferManager.unpin(bd);
-		
-		Buffer be = bufferManager.pin(a5,(long)30);
-		bufferManager.unpin(be);
-		
-		Buffer bff = bufferManager.pin(a6,(long)40);
-		bufferManager.unpin(bff);
-		
-		ba = bufferManager.pin(a1,(long)45);
-		bufferManager.unpin(ba);
-		
-		bc = bufferManager.pin(a3,(long)54);
-		bufferManager.unpin(bc);
-		
-		bd = bufferManager.pin(a4,(long)70);
-		bufferManager.unpin(bd);
-		
-		be = bufferManager.pin(a5,(long)80);
-		bufferManager.unpin(be);
-		
-		bff = bufferManager.pin(a6,(long)100);
-		bufferManager.unpin(bff);
-		
-		//System.out.println(BasicBufferMgr.hashBufferPool.size());
-		System.out.print("buffer contents at the end of the test ->");
-		BasicBufferMgr.printBufferPoolBlocks();
+		for(int i=1;i<=8;++i) {
+			blocks.add(new Block("test1",i));
+		}
+		BM.pin(blocks.get(0),1);
+		BM.pin(blocks.get(1),2);
+		BM.pin(blocks.get(2),3);
+		BM.pin(blocks.get(3),4);
+		BM.pin(blocks.get(4),5);
+		BM.pin(blocks.get(5),6);
+		BM.pin(blocks.get(6),7);
+		BM.pin(blocks.get(7),8);
+		BM.pin(blocks.get(3),9);
+		BM.pin(blocks.get(1),10);
+		BM.pin(blocks.get(6),11);
+		BM.pin(blocks.get(0),12);
+		BM.unpin(buffers.get(7));
+		BM.unpin(buffers.get(6));
+		BM.unpin(buffers.get(5));
+		BM.unpin(buffers.get(4));
+		BM.unpin(buffers.get(3));
+		BM.unpin(buffers.get(0));
+		BM.unpin(buffers.get(6));
+		BM.unpin(buffers.get(3));
+		BM.unpin(buffers.get(1));
+		BM.unpin(buffers.get(1));
+		BM.pin(new Block("test1",9));
 	}
 
 }
