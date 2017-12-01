@@ -13,7 +13,7 @@ import simpledb.server.SimpleDB;
  * @author Edward Sciore
  *
  */
-class BasicBufferMgr {
+public class BasicBufferMgr {
    /**
     * @author priyance
     * replaced the existing bufferpool which was an array with a HashMap
@@ -224,6 +224,17 @@ class BasicBufferMgr {
 	   }
    }
   
+   /**
+    * 
+    */
+   public static void printBufferPoolBlocks() {
+	   Iterator<Entry<Block,Buffer>> iterator = bufferPoolMap.entrySet().iterator();
+	   while(iterator.hasNext()) {
+		   Entry<Block,Buffer> entry = iterator.next();
+		   System.out.println(entry.getKey().fileName()+" ");
+	   }
+	   System.out.println();
+   }
    
    /**
     * @author priyance
