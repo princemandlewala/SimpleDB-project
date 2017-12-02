@@ -25,14 +25,15 @@ public class LRUKTEST {
 		for(int i=1;i<=8;++i) {
 			blocks.add(new Block("test1",i));
 		}
-		BM.pin(blocks.get(0),1);
-		BM.pin(blocks.get(1),2);
-		BM.pin(blocks.get(2),3);
-		BM.pin(blocks.get(3),4);
-		BM.pin(blocks.get(4),5);
-		BM.pin(blocks.get(5),6);
-		BM.pin(blocks.get(6),7);
-		BM.pin(blocks.get(7),8);
+		
+		buffers.add(BM.pin(blocks.get(0),1));
+		buffers.add(BM.pin(blocks.get(1),2));
+		buffers.add(BM.pin(blocks.get(2),3));
+		buffers.add(BM.pin(blocks.get(3),4));
+		buffers.add(BM.pin(blocks.get(4),5));
+		buffers.add(BM.pin(blocks.get(5),6));
+		buffers.add(BM.pin(blocks.get(6),7));
+		buffers.add(BM.pin(blocks.get(7),8));
 		BM.pin(blocks.get(3),9);
 		BM.pin(blocks.get(1),10);
 		BM.pin(blocks.get(6),11);
@@ -47,7 +48,7 @@ public class LRUKTEST {
 		BM.unpin(buffers.get(3));
 		BM.unpin(buffers.get(1));
 		BM.unpin(buffers.get(1));
-		BM.pin(new Block("test1",9));
+		BM.pin(new Block("test1",9),23);
 	}
 
 }

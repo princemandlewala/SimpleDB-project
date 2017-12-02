@@ -23,7 +23,7 @@ public class LogMgr implements Iterable<BasicLogRecord> {
    public static final int LAST_POS = 0;
 
    private String logfile;
-   private Page mypage = new Page();
+   private Page mypage;
    private Block currentblk;
    private int currentpos;
 
