@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import simpledb.file.*;
+import simpledb.log.BasicLogRecord;
 import simpledb.server.SimpleDB;
 
 /**
@@ -16,8 +17,9 @@ import simpledb.server.SimpleDB;
  */
 public class BasicBufferMgr {
 	/**
-	 * @author priyance replaced the existing bufferpool which was an array with a
-	 *         HashMap
+	 * Added history, last accessed and HashMap of bufferpool
+	 * 
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
 	 */
 	private static HashMap<Block, Buffer> bufferPoolMap;
 	private int bufferPoolSize;
@@ -43,10 +45,10 @@ public class BasicBufferMgr {
 	 */
 
 	/**
+	 * All the variables used for the Buffer Management are initialized here.
 	 * 
 	 * @param numbuffs
-	 * @author priyance All the variables used for the Buffer Management are
-	 *         initialized here. News
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
 	 */
 	BasicBufferMgr(int numbuffs) {
 		numAvailable = numbuffs;
@@ -57,11 +59,12 @@ public class BasicBufferMgr {
 	}
 
 	/**
-	 * @author priyance
+	 * this constructor takes the value of number of buffers and k value for LRU
+	 * algorithm to apply for choosing an unpinned buffer
+	 * 
 	 * @param numbuffs
 	 * @param lru_K_value
-	 *            this constructor takes the value of number of buffers and k value
-	 *            for LRU algorithm to apply for choosing an unpinned buffer
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
 	 */
 
 	public BasicBufferMgr(int numbuffs, int lru_K_value) {
@@ -70,10 +73,11 @@ public class BasicBufferMgr {
 	}
 
 	/**
-	 * @author priyance Flushes the dirty buffers modified by the specified
-	 *         transaction.
+	 * Flushes the dirty buffers modified by the specified transaction.
+	 * 
 	 * @param txnum
 	 *            the transaction's id number
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
 	 */
 	synchronized void flushAll(int txnum) {
 		Iterator<Entry<Block, Buffer>> iterator = bufferPoolMap.entrySet().iterator();
@@ -87,7 +91,6 @@ public class BasicBufferMgr {
 	}
 
 	/**
-	 * @author priyance
 	 * @param blk
 	 * @param timeWhenBlockPinned
 	 * @return
@@ -96,19 +99,20 @@ public class BasicBufferMgr {
 	 *         input parameter If the input parameter value is not being sent by the
 	 *         user, the method will take the default value as the current time of
 	 *         the system in milliseconds
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
 	 */
 	synchronized Buffer pin(Block blk, long timeWhenBlockPinned) {
-		System.out.println("Pin Buffer : " + blk + " at time " + timeWhenBlockPinned);
+		LogPrint("Pin Buffer : " + blk + " at time " + timeWhenBlockPinned);
 		Buffer buffer = findExistingBufferUsingHashMap(blk);
 		if (buffer == null) {
-			System.out.println("\tNo buffer present.");
+			LogPrint("\tNo buffer present.");
 			buffer = chooseUnpinnedBuffer(timeWhenBlockPinned);
 			if (buffer == null) {
 				return null;
 			}
 
-			if(buffer.block()!=null) {
-				System.out.println("\t"+buffer.block() + " will be replaced by the block " + blk);
+			if (buffer.block() != null) {
+				LogPrint("\t" + buffer.block() + " will be replaced by the block " + blk);
 			}
 			bufferPoolMap.remove(buffer.block());
 
@@ -138,10 +142,11 @@ public class BasicBufferMgr {
 	}
 
 	/**
-	 * @author priyance
+	 * 
 	 * @param block
 	 * @return the constructor is used to get the current time of the system in
 	 *         milliseconds if the time to pin the buffer is not sent by the user.
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
 	 */
 	synchronized Buffer pin(Block block) {
 		return pin(block, System.currentTimeMillis());
@@ -156,6 +161,7 @@ public class BasicBufferMgr {
 	 * @param fmtr
 	 *            a pageformatter object, used to format the new block
 	 * @return the pinned buffer
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
 	 */
 	synchronized Buffer pinNew(String filename, PageFormatter fmtr) {
 		Buffer buff = chooseUnpinnedBuffer(System.currentTimeMillis());
@@ -172,9 +178,10 @@ public class BasicBufferMgr {
 	 * 
 	 * @param buff
 	 *            the buffer to be unpinned
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
 	 */
 	synchronized void unpin(Buffer buff) {
-		System.out.println("Unpin Buffer : "+buff.block());
+		LogPrint("Unpin Buffer : " + buff.block());
 		buff.unpin();
 		if (!buff.isPinned())
 			numAvailable++;
@@ -184,25 +191,33 @@ public class BasicBufferMgr {
 	 * Returns the number of available (i.e. unpinned) buffers.
 	 * 
 	 * @return the number of available buffers
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
 	 */
 	int available() {
 		return numAvailable;
 	}
 
+	/**
+	 * 
+	 * @param blk
+	 * @return existing buffer
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
+	 */
 	private Buffer findExistingBufferUsingHashMap(Block blk) {
 		return bufferPoolMap.get(blk);
 	}
 
 	/**
-	 * @author priyance Chooses an unpinned buffer based on the LRU-K policy
+	 * Chooses an unpinned buffer based on the LRU-K policy
 	 * @param timeWhenBlockPinned
 	 * @return
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
 	 */
 
 	private Buffer chooseUnpinnedBuffer(long timeWhenBlockPinned) {
-		System.out.println("\tSelecting an unpinned buffer");
+		LogPrint("\tSelecting an unpinned buffer");
 		if (bufferPoolMap.size() < bufferPoolSize) {
-			System.out.println("\tPinning to a new buffer in Pool.");
+			LogPrint("\tPinning to a new buffer in Pool.");
 			return new Buffer();
 		} else {
 			long currentTime = timeWhenBlockPinned;
@@ -224,32 +239,59 @@ public class BasicBufferMgr {
 				}
 			}
 			if (bufferToReturn != null) {
-				System.out.println("\tReplacing buffer: " + bufferToReturn.block());
+				LogPrint("\tReplacing buffer: " + bufferToReturn.block());
 			} else {
-				System.out.println("\tNo unpinned buffer left");
+				LogPrint("\tNo unpinned buffer left");
 			}
 			return bufferToReturn;
 		}
 	}
 
 	/**
-	* 
-	*/
-	public static void printBufferPoolBlocks() {
-		Iterator<Entry<Block, Buffer>> iterator = bufferPoolMap.entrySet().iterator();
-		while (iterator.hasNext()) {
-			Entry<Block, Buffer> entry = iterator.next();
-			System.out.println(entry.getKey().fileName() + " ");
+	 * Printing the log
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
+	 */
+	public void printLogBuffer() {
+		Iterator<BasicLogRecord> logs = SimpleDB.logMgr().iterator();
+		while (logs.hasNext()) {
+			System.out.println(logs.next().nextString());
 		}
-		System.out.println();
 	}
 
 	/**
-	 * @author priyance history of the LRU-K algorithm needs to be initilaized based
+	 * For appending the log message in the LogMgr
+	 * @param message
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
+	 */
+	private void LogPrint(String message) {
+		SimpleDB.logMgr().append(new Object[] { message });
+	}
+
+	/**
+	 * For testcases developed simpledb.test package
+	* @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
+	*/
+	public void printBufferPoolBlocks() {
+		Iterator<Entry<Block, Buffer>> iterator = bufferPoolMap.entrySet().iterator();
+		while (iterator.hasNext()) {
+			Entry<Block, Buffer> entry = iterator.next();
+			Long[] historyCreated = history.get(entry.getKey());
+			String historyValues = "" + historyCreated[LRU_K_VALUE - 1];
+			for (int q = LRU_K_VALUE - 2; q >= 0; q--) {
+				historyValues += "||" + historyCreated[q];
+			}
+			LogPrint(entry.getKey() + " : History -> " + historyValues + " , Last Accessed ->  "
+					+ lastAssigned.get(entry.getKey()));
+		}
+	}
+
+	/**
+	 * history of the LRU-K algorithm needs to be initilaized based
 	 *         on the K value. Most recent entry of the buffer goes to 0th index and
 	 *         the most least used entry is retrieved from the K-1 index.
 	 * @param timeWhenblockPinned
 	 * @return
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
 	 */
 
 	private Long[] initializeNewHistory(long timeWhenblockPinned) {
@@ -262,9 +304,10 @@ public class BasicBufferMgr {
 	}
 
 	/**
-	 * @author priyance method to shift history values by one index
+	 * method to shift history values by one index
 	 * @param historyCreated
 	 * @param timeWhenBlockPinned
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
 	 */
 
 	void shiftValuesByOneIndex(Long[] historyCreated, long timeWhenBlockPinned) {
@@ -277,14 +320,19 @@ public class BasicBufferMgr {
 		}
 	}
 
-	private long getLastAccessedBuffer(Block block) {
+	/**
+	 * return the time of last accessed buffer
+	 * @param block
+	 * @return
+	 * @author abhardw3, achauha3, kdpandya, nkapadi, pjmandle
+	 */
+	public long getLastAccessedBuffer(Block block) {
 		Long[] historyCreated = history.get(block);
 		String historyValues = "" + historyCreated[LRU_K_VALUE - 1];
 		for (int q = LRU_K_VALUE - 2; q >= 0; q--) {
 			historyValues += "||" + historyCreated[q];
 		}
-		System.out.println(
-				"\t\t" + block + " : History -> " + historyValues + " , Last Accessed ->  " + lastAssigned.get(block));
+		LogPrint("\t\t" + block + " : History -> " + historyValues + " , Last Accessed ->  " + lastAssigned.get(block));
 		return historyCreated[LRU_K_VALUE - 1];
 	}
 }
